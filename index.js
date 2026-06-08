@@ -5,10 +5,9 @@ const app = express();
 
 app.use(express.json());
 
-const TOKEN = "
-13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
+const TOKEN = "13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
 
-const API = `https://api.safew.bot/bot${13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W}`;
+const API = `https://api.safew.bot/bot${TOKEN}`;}`;
 
 // Penyimpanan sementara
 const database = {};
