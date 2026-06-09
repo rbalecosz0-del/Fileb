@@ -4,13 +4,12 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-const TOKEN = "13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
+// GANTI TOKEN DI BAWAH INI DENGAN TOKEN DARI BOTFATHER ANDA
+const TOKEN = "13569302:3Esx8dVS3OXvFFqQM5XtaErTiHVOPiYl76J";
 const API = `https://api.safew.bot/bot${TOKEN}`;
 
-// Penyimpanan database sementara di memori
 const database = {};
 
-// Template Keyboard Menu Utama di bagian bawah
 const mainMenuKeyboard = {
     reply_markup: {
         keyboard: [
@@ -28,14 +27,11 @@ app.post("/", async (req, res) => {
         const msg = update.message;
         const chat_id = msg.chat.id;
 
-        // 1. RESPONS UTAMA (/start atau ketik menu biasa)
         if (msg.text && (msg.text.startsWith("/start") || msg.text === "Kembali")) {
             const param = msg.text.split(" ")[1];
 
-            // JIKA USER MEMBUKA LINK otomatis (contoh: t.me/bot?start=xyz)
             if (param && database[param]) {
                 const data = database[param];
-
                 if (data.type === "video") {
                     await axios.post(`${API}/sendVideo`, { chat_id, video: data.file_id, caption: "✅ Video berhasil dibuka" });
                 } else if (data.type === "document") {
@@ -46,7 +42,6 @@ app.post("/", async (req, res) => {
                 return res.sendStatus(200);
             }
 
-            // TAMPILAN MENU UTAMA
             const pesanMenu = 
 `😉 Selamat datang di FILE CODE SYSTEM.
 ━━━━━━━━━━━━━━━━━━━━
@@ -67,7 +62,6 @@ app.post("/", async (req, res) => {
             });
         }
 
-        // 2. KETIKA USER KLIK TOMBOL "Up File"
         else if (msg.text === "📥 Up File") {
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
@@ -75,7 +69,6 @@ app.post("/", async (req, res) => {
             });
         }
 
-        // 3. KETIKA USER KLIK TOMBOL "Get File"
         else if (msg.text === "📤 Get File") {
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
@@ -83,7 +76,6 @@ app.post("/", async (req, res) => {
             });
         }
 
-        // 4. KETIKA USER MENGIRIM KODE
         else if (msg.text && database[msg.text]) {
             const data = database[msg.text];
             if (data.type === "video") {
@@ -95,13 +87,46 @@ app.post("/", async (req, res) => {
             }
         }
 
-        // 5. PROSES UPLOAD VIDEO
         else if (msg.video) {
-            // PERBAIKAN: Format kode diubah menjadi Meviss_
             const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
             database[code] = { type: "video", file_id: msg.video.file_id };
-
             const sizeMB = (msg.video.file_size / (1024 * 1024)).toFixed(2);
+
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
+            });
+        }
+
+        else if (msg.document) {
+            const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
+            database[code] = { type: "document", file_id: msg.document.file_id };
+            const sizeMB = (msg.document.file_size / (1024 * 1024)).toFixed(2);
+
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
+            });
+        }
+
+        else if (msg.photo) {
+            const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
+            const photo = msg.photo[msg.photo.length - 1];
+            database[code] = { type: "photo", file_id: photo.file_id };
+            const sizeMB = photo.file_size ? (photo.file_size / (1024 * 1024)).toFixed(2) : "0.03";
+
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
+            });
+        }
+    }
+    res.sendStatus(200);
+});
+
+app.listen(3000, () => {
+    console.log("Bot aktif");
+});            const sizeMB = (msg.video.file_size / (1024 * 1024)).toFixed(2);
 
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
