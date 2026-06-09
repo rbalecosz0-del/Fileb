@@ -7,32 +7,29 @@ app.use(express.json());
 
 const TOKEN = "13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
 
-const API = "https://api.safew.bot/bot${TOKEN}";
+// PERBAIKAN: Menggunakan backtick (`) agar ${TOKEN} terbaca dengan benar
+const API = `https://api.safew.bot/bot${TOKEN}`;
+
 // Penyimpanan sementara
 const database = {};
 
 app.post("/", async (req, res) => {
-
     const update = req.body;
 
-    if(update.message){
-
+    if (update.message) {
         const msg = update.message;
         const chat_id = msg.chat.id;
 
         // START
-        if(msg.text && msg.text.startsWith("/start")){
-
+        if (msg.text && msg.text.startsWith("/start")) {
             const param = msg.text.split(" ")[1];
 
             // Jika buka link file
-            if(param && database[param]){
-
+            if (param && database[param]) {
                 const data = database[param];
 
                 // VIDEO
-                if(data.type === "video"){
-
+                if (data.type === "video") {
                     await axios.post(`${API}/sendVideo`, {
                         chat_id,
                         video: data.file_id,
@@ -41,8 +38,7 @@ app.post("/", async (req, res) => {
                 }
 
                 // DOCUMENT
-                if(data.type === "document"){
-
+                if (data.type === "document") {
                     await axios.post(`${API}/sendDocument`, {
                         chat_id,
                         document: data.file_id,
@@ -51,8 +47,7 @@ app.post("/", async (req, res) => {
                 }
 
                 // PHOTO
-                if(data.type === "photo"){
-
+                if (data.type === "photo") {
                     await axios.post(`${API}/sendPhoto`, {
                         chat_id,
                         photo: data.file_id,
@@ -61,48 +56,32 @@ app.post("/", async (req, res) => {
                 }
 
             } else {
-
                 await axios.post(`${API}/sendMessage`, {
                     chat_id,
-                    text:
-`👋 Selamat datang
-
-📤 Kirim video/file/foto untuk membuat link.`
+                    text: `👋 Selamat datang\n\n📤 Kirim video/file/foto untuk membuat link.`
                 });
             }
         }
 
         // VIDEO
-        if(msg.video){
-
-            const code = Math.random()
-                .toString(36)
-                .substring(2,8);
+        if (msg.video) {
+            const code = Math.random().toString(36).substring(2, 8);
 
             database[code] = {
                 type: "video",
                 file_id: msg.video.file_id
             };
 
+            // PERBAIKAN: Merapikan string link yang berantakan
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
-                text:
-`✅ Video berhasil disimpan
-
-🔑 Kode:
-${code}
-
-🔗 Link:
-}`
+                text: `✅ Video berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
             });
-        }https://t.me/SafeW_bot?start=${code
+        }
 
         // DOCUMENT
-        if(msg.document){
-
-            const code = Math.random()
-                .toString(36)
-                .substring(2,8);
+        if (msg.document) {
+            const code = Math.random().toString(36).substring(2, 8);
 
             database[code] = {
                 type: "document",
@@ -111,42 +90,24 @@ ${code}
 
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
-                text:
-`✅ File berhasil disimpan
-
-🔑 Kode:
-${code}
-
-🔗 Link:
-https://t.me/SafeW_bot?start=${code}`
+                text: `✅ File berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
             });
         }
 
         // PHOTO
-        if(msg.photo){
-
-            const code = Math.random()
-                .toString(36)
-                .substring(2,8);
-
-            const photo =
-                msg.photo[msg.photo.length - 1];
+        if (msg.photo) {
+            const code = Math.random().toString(36).substring(2, 8);
+            const photo = msg.photo[msg.photo.length - 1];
 
             database[code] = {
                 type: "photo",
                 file_id: photo.file_id
             };
 
+            // PERBAIKAN: Menambahkan tanda tutup backtick (`) yang kurang
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
-                text:
-`✅ Foto berhasil disimpan
-
-🔑 Kode:
-${code}
-
-🔗 Link:
-https://t.me/SafeW_bot?start=${code
+                text: `✅ Foto berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
             });
         }
     }
