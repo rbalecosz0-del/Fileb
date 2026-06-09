@@ -2,16 +2,24 @@ const express = require("express");
 const axios = require("axios");
 
 const app = express();
-
 app.use(express.json());
 
 const TOKEN = "13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
-
-// PERBAIKAN: Menggunakan backtick (`) agar ${TOKEN} terbaca dengan benar
 const API = `https://api.safew.bot/bot${TOKEN}`;
 
-// Penyimpanan sementara
+// Penyimpanan database sementara di memori
 const database = {};
+
+// Template Keyboard Menu Utama di bagian bawah
+const mainMenuKeyboard = {
+    reply_markup: {
+        keyboard: [
+            [{ text: "📥 Up File" }, { text: "📤 Get File" }]
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: false
+    }
+};
 
 app.post("/", async (req, res) => {
     const update = req.body;
@@ -20,94 +28,113 @@ app.post("/", async (req, res) => {
         const msg = update.message;
         const chat_id = msg.chat.id;
 
-        // START
-        if (msg.text && msg.text.startsWith("/start")) {
+        // 1. RESPONS UTAMA (/start atau ketik menu biasa)
+        if (msg.text && (msg.text.startsWith("/start") || msg.text === "Kembali")) {
             const param = msg.text.split(" ")[1];
 
-            // Jika buka link file
+            // JIKA USER MEMBUKA LINK otomatis (contoh: t.me/bot?start=xyz)
             if (param && database[param]) {
                 const data = database[param];
 
-                // VIDEO
                 if (data.type === "video") {
-                    await axios.post(`${API}/sendVideo`, {
-                        chat_id,
-                        video: data.file_id,
-                        caption: "✅ Video berhasil dibuka"
-                    });
+                    await axios.post(`${API}/sendVideo`, { chat_id, video: data.file_id, caption: "✅ Video berhasil dibuka" });
+                } else if (data.type === "document") {
+                    await axios.post(`${API}/sendDocument`, { chat_id, document: data.file_id, caption: "✅ File berhasil dibuka" });
+                } else if (data.type === "photo") {
+                    await axios.post(`${API}/sendPhoto`, { chat_id, photo: data.file_id, caption: "✅ Foto berhasil dibuka" });
                 }
+                return res.sendStatus(200);
+            }
 
-                // DOCUMENT
-                if (data.type === "document") {
-                    await axios.post(`${API}/sendDocument`, {
-                        chat_id,
-                        document: data.file_id,
-                        caption: "✅ File berhasil dibuka"
-                    });
-                }
+            // TAMPILAN MENU UTAMA
+            const pesanMenu = 
+`😉 Selamat datang di FILE CODE SYSTEM.
+━━━━━━━━━━━━━━━━━━━━
+📌 MENU
+━━━━━━━━━━━━━━━━━━━━
+📥 Up File → upload file
+📤 Get File → ambil file pakai CODE
+━━━━━━━━━━━━━━━━━━━━
+💀 NOTE
+━━━━━━━━━━━━━━━━━━━━
+• CODE hilang = tanggung jawab user
+• Jangan spam 😉`;
 
-                // PHOTO
-                if (data.type === "photo") {
-                    await axios.post(`${API}/sendPhoto`, {
-                        chat_id,
-                        photo: data.file_id,
-                        caption: "✅ Foto berhasil dibuka"
-                    });
-                }
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: pesanMenu,
+                ...mainMenuKeyboard
+            });
+        }
 
-            } else {
-                await axios.post(`${API}/sendMessage`, {
-                    chat_id,
-                    text: `👋 Selamat datang\n\n📤 Kirim video/file/foto untuk membuat link.`
-                });
+        // 2. KETIKA USER KLIK TOMBOL "Up File"
+        else if (msg.text === "📥 Up File") {
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: "Upload atau silakan kirim file/video/foto Anda ke sini..."
+            });
+        }
+
+        // 3. KETIKA USER KLIK TOMBOL "Get File"
+        else if (msg.text === "📤 Get File") {
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: "Silakan kirimkan KODE file untuk mengambil file Anda."
+            });
+        }
+
+        // 4. KETIKA USER MENGIRIM KODE
+        else if (msg.text && database[msg.text]) {
+            const data = database[msg.text];
+            if (data.type === "video") {
+                await axios.post(`${API}/sendVideo`, { chat_id, video: data.file_id, caption: "✅ Video berhasil dibuka" });
+            } else if (data.type === "document") {
+                await axios.post(`${API}/sendDocument`, { chat_id, document: data.file_id, caption: "✅ File berhasil dibuka" });
+            } else if (data.type === "photo") {
+                await axios.post(`${API}/sendPhoto`, { chat_id, photo: data.file_id, caption: "✅ Foto berhasil dibuka" });
             }
         }
 
-        // VIDEO
-        if (msg.video) {
-            const code = Math.random().toString(36).substring(2, 8);
+        // 5. PROSES UPLOAD VIDEO
+        else if (msg.video) {
+            // PERBAIKAN: Format kode diubah menjadi Meviss_
+            const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
+            database[code] = { type: "video", file_id: msg.video.file_id };
 
-            database[code] = {
-                type: "video",
-                file_id: msg.video.file_id
-            };
-
-            // PERBAIKAN: Merapikan string link yang berantakan
-            await axios.post(`${API}/sendMessage`, {
-                chat_id,
-                text: `✅ Video berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
-            });
-        }
-
-        // DOCUMENT
-        if (msg.document) {
-            const code = Math.random().toString(36).substring(2, 8);
-
-            database[code] = {
-                type: "document",
-                file_id: msg.document.file_id
-            };
+            const sizeMB = (msg.video.file_size / (1024 * 1024)).toFixed(2);
 
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
-                text: `✅ File berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
             });
         }
 
-        // PHOTO
-        if (msg.photo) {
-            const code = Math.random().toString(36).substring(2, 8);
+        // 6. PROSES UPLOAD DOCUMENT (FILE)
+        else if (msg.document) {
+            // PERBAIKAN: Format kode diubah menjadi Meviss_
+            const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
+            database[code] = { type: "document", file_id: msg.document.file_id };
+
+            const sizeMB = (msg.document.file_size / (1024 * 1024)).toFixed(2);
+
+            await axios.post(`${API}/sendMessage`, {
+                chat_id,
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
+            });
+        }
+
+        // 7. PROSES UPLOAD PHOTO
+        else if (msg.photo) {
+            // PERBAIKAN: Format kode diubah menjadi Meviss_
+            const code = "Meviss_" + Math.random().toString(36).substring(2, 8) + "_0v_1p_0d_" + Math.random().toString(36).substring(2, 10);
             const photo = msg.photo[msg.photo.length - 1];
+            database[code] = { type: "photo", file_id: photo.file_id };
 
-            database[code] = {
-                type: "photo",
-                file_id: photo.file_id
-            };
+            const sizeMB = photo.file_size ? (photo.file_size / (1024 * 1024)).toFixed(2) : "0.03";
 
-            // PERBAIKAN: Menambahkan tanda tutup backtick (`) yang kurang
             await axios.post(`${API}/sendMessage`, {
                 chat_id,
-                text: `✅ Foto berhasil disimpan\n\n🔑 Kode:\n${code}\n\n🔗 Link:\nhttps://t.me/SafeW_bot?start=${code}`
+                text: `💀 UPLOAD COMPLETE\n\n😉 CODE:\n${code}\n\n📦 Total File : 1\n💾 Size      : ${sizeMB} MB\n\n📦 File berhasil disimpan 😉\n🤖 Bot: Mevissbot`
             });
         }
     }
