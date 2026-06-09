@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // GANTI DENGAN TOKEN ASLI DARI BOTFATHER ANDA
-const TOKEN = "13524293:3ElvmkM2sB4zKicjZscRiAifLPbACTiJk3W";
+const TOKEN = "13569302:3Esx8dVS3OXvFFqQM5XtaErTiHVOPiYl76J";
 const API = `https://api.safew.bot/bot${TOKEN}`;
 
 // Penyimpanan database sementara di memori
